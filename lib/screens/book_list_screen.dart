@@ -1,44 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:kutubu_app/screens/add_edit_book_screen.dart';
-import '../db/book_database.dart';
 import '../models/book.dart';
-import '../widgets/book_item.dart'; // Kita pakai widget card dari sini nanti
+import '../api/book_api_service.dart';
+import '../widgets/book_item.dart';
+import 'add_edit_book_screen.dart';
 
 class BookListScreen extends StatefulWidget {
-  const BookListScreen({super.key});
+  const BookListScreen({Key? key}) : super(key: key);
 
   @override
   _BookListScreenState createState() => _BookListScreenState();
 }
 
 class _BookListScreenState extends State<BookListScreen> {
-  late Future<List<Book>> booksFuture;
+  late Future<List<Book>> _booksFuture;
 
   @override
   void initState() {
     super.initState();
-    refreshBooks();
+    _refreshBooks();
   }
 
-  void refreshBooks() {
-    booksFuture = BookDatabase.instance.readAllBooks();
+  void _refreshBooks() {
+    setState(() {
+      _booksFuture = BookApiService.fetchBooks();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Katalog Buku Saya'),
-        centerTitle: true,
+        title: const Text('Katalog Buku'),
         backgroundColor: Colors.teal,
       ),
       body: FutureBuilder<List<Book>>(
-        future: booksFuture,
+        future: _booksFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Terjadi Kesalahan: ${snapshot.error}'));
+            return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('Belum ada buku.'));
           } else {
@@ -47,15 +48,7 @@ class _BookListScreenState extends State<BookListScreen> {
               padding: const EdgeInsets.all(12),
               itemCount: books.length,
               itemBuilder: (context, index) {
-                final book = books[index];
-                return BookItem(
-                  book: book,
-                  onRefresh: () {
-                    setState(() {
-                      refreshBooks();
-                    });
-                  },
-                );
+                return BookItem(book: books[index], onRefresh: _refreshBooks);
               },
             );
           }
@@ -67,13 +60,11 @@ class _BookListScreenState extends State<BookListScreen> {
             MaterialPageRoute(builder: (context) => const AddEditBookScreen()),
           );
           if (result == true) {
-            setState(() {
-              refreshBooks(); // Refresh setelah tambah/edit
-            });
+            _refreshBooks();
           }
         },
-        backgroundColor: Colors.teal,
         child: const Icon(Icons.add),
+        backgroundColor: Colors.teal,
       ),
     );
   }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../db/book_database.dart';
 import '../models/book.dart';
+import '../api/book_api_service.dart';
 
 class AddEditBookScreen extends StatefulWidget {
-  final Book? book; // Kalau null ➔ mode tambah, kalau ada ➔ mode edit
+  final Book? book;
 
-  const AddEditBookScreen({super.key, this.book});
+  const AddEditBookScreen({Key? key, this.book}) : super(key: key);
 
   @override
   _AddEditBookScreenState createState() => _AddEditBookScreenState();
@@ -13,7 +13,6 @@ class AddEditBookScreen extends StatefulWidget {
 
 class _AddEditBookScreenState extends State<AddEditBookScreen> {
   final _formKey = GlobalKey<FormState>();
-
   late String title;
   late String author;
   late int year;
@@ -30,9 +29,11 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.book != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.book == null ? 'Tambah Buku' : 'Edit Buku'),
+        title: Text(isEditing ? 'Edit Buku' : 'Tambah Buku'),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
@@ -68,9 +69,8 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
                 decoration: const InputDecoration(labelText: 'Tahun Terbit'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Tahun harus diisi';
-                  }
                   final number = int.tryParse(value);
                   if (number == null) return 'Tahun harus angka';
                   return null;
@@ -94,18 +94,23 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
                   backgroundColor: Colors.teal,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: saveBook,
+                onPressed: _saveBook,
                 child: const Text('Simpan', style: TextStyle(fontSize: 18)),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              if (isEditing) ...[
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: _deleteBook,
+                  child: const Text(
+                    'Hapus Buku',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
-                onPressed: deleteBook,
-                child: const Text('Hapus Buku', style: TextStyle(fontSize: 18)),
-              ),
+              ],
             ],
           ),
         ),
@@ -113,12 +118,11 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
     );
   }
 
-  Future<void> saveBook() async {
-    final isValid = _formKey.currentState!.validate();
-    if (isValid) {
+  Future<void> _saveBook() async {
+    if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      final newBook = Book(
+      final book = Book(
         id: widget.book?.id,
         title: title,
         author: author,
@@ -126,39 +130,52 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
         category: category,
       );
 
-      if (widget.book == null) {
-        await BookDatabase.instance.create(newBook);
-      } else {
-        await BookDatabase.instance.update(newBook);
+      try {
+        if (widget.book == null) {
+          await BookApiService.createBook(book);
+        } else {
+          await BookApiService.updateBook(book);
+        }
+        Navigator.of(context).pop(true);
+      } catch (e) {
+        _showError(e.toString());
       }
-
-      Navigator.of(context).pop(true); // Kembali dan refresh list
     }
   }
 
-  Future<void> deleteBook() async {
+  Future<void> _deleteBook() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
             title: const Text('Konfirmasi'),
-            content: const Text('Apakah Anda yakin ingin menghapus buku ini?'),
+            content: const Text('Yakin ingin menghapus buku ini?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.pop(context, false),
                 child: const Text('Batal'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => Navigator.pop(context, true),
                 child: const Text('Hapus', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
     );
 
-    if (confirm == true) {
-      await BookDatabase.instance.delete(widget.book!.id!);
-      Navigator.of(context).pop(true); // Kembali dan refresh list
+    if (confirm == true && widget.book != null) {
+      try {
+        await BookApiService.deleteBook(widget.book!.id!);
+        Navigator.of(context).pop(true);
+      } catch (e) {
+        _showError(e.toString());
+      }
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $message')));
   }
 }

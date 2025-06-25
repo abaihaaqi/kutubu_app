@@ -4,7 +4,6 @@ class Book {
   String author;
   int year;
   String category;
-  String? cover; // Path atau base64 gambar cover (opsional)
 
   Book({
     this.id,
@@ -12,33 +11,21 @@ class Book {
     required this.author,
     required this.year,
     required this.category,
-    this.cover,
   });
 
-  // Konversi dari Map (database) ke object
-  factory Book.fromMap(Map<String, dynamic> map) {
-    return Book(
-      id: map['id'],
-      title: map['title'],
-      author: map['author'],
-      year: map['year'],
-      category: map['category'],
-      cover: map['cover'],
-    );
-  }
+  factory Book.fromJson(Map<String, dynamic> json) => Book(
+    id: json['id'],
+    title: json['title'],
+    author: json['author'],
+    year: json['year'],
+    category: json['category'],
+  );
 
-  // Konversi dari object ke Map (untuk insert ke database)
-  Map<String, dynamic> toMap() {
-    var map = <String, dynamic>{
-      'title': title,
-      'author': author,
-      'year': year,
-      'category': category,
-      'cover': cover,
-    };
-    if (id != null) {
-      map['id'] = id;
-    }
-    return map;
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'author': author,
+    'year': year,
+    'category': category,
+  };
 }
