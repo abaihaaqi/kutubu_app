@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'screens/book_list_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'pages/login_page.dart';
+import 'pages/book_list_page.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 
@@ -11,10 +13,49 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kutubu',
+      title: 'Kutubu Book App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const BookListScreen(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        useMaterial3: true,
+      ),
+      home: const SplashScreen(),
     );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  Future<void> checkLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    await Future.delayed(const Duration(milliseconds: 500)); // animasi ringan
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => token != null ? const BookListPage() : const LoginPage(),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkLogin();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
