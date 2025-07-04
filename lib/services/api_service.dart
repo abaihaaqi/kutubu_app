@@ -12,7 +12,7 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': username, 'password': password}),
     );
-    if (res.statusCode != 200) throw Exception('Register failed');
+    if (res.statusCode != 201) throw Exception('Register failed');
   }
 
   Future<void> login(String username, String password) async {
