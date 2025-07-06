@@ -16,6 +16,14 @@ class BookDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasCover = book.coverUrl != null && book.coverUrl!.isNotEmpty;
 
+    void deleteSuccess() {
+      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BookListPage()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(book.title)),
       body: SingleChildScrollView(
@@ -89,13 +97,7 @@ class BookDetailPage extends StatelessWidget {
                               TextButton(
                                 onPressed: () async {
                                   await ApiService().deleteBook(book.id);
-                                  Navigator.pop(context); // tutup dialog
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const BookListPage(),
-                                    ),
-                                  );
+                                  deleteSuccess();
                                 },
                                 child: Text(
                                   'Hapus',

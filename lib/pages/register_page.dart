@@ -33,9 +33,11 @@ class _RegisterPageState extends State<RegisterPage> {
         Navigator.pop(context); // kembali ke halaman login
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Register gagal: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Register gagal: $e')));
+      }
     } finally {
       setState(() => _isLoading = false);
     }

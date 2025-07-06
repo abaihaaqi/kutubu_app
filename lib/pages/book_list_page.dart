@@ -8,6 +8,11 @@ import 'login_page.dart';
 import 'book_form_page.dart';
 import 'book_detail_page.dart';
 
+Future<String?> getUsername() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getString('username');
+}
+
 class BookListPage extends StatefulWidget {
   const BookListPage({super.key});
 
@@ -16,6 +21,7 @@ class BookListPage extends StatefulWidget {
 }
 
 class _BookListPageState extends State<BookListPage> {
+  String _username = "";
   List<Book> books = [];
   List<Book> filteredBooks = [];
   bool isLoading = true;
@@ -25,6 +31,11 @@ class _BookListPageState extends State<BookListPage> {
   @override
   void initState() {
     super.initState();
+    getUsername().then((value) {
+      setState(() {
+        _username = value ?? 'Guest';
+      });
+    });
     fetchBooks();
   }
 
@@ -37,9 +48,11 @@ class _BookListPageState extends State<BookListPage> {
         filterBooks(); // Apply search filter
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal memuat buku: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat buku: $e')));
+      }
     } finally {
       setState(() => isLoading = false);
     }
@@ -79,30 +92,11 @@ class _BookListPageState extends State<BookListPage> {
     }
   }
 
-  Future<void> confirmDelete(int id) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Hapus Buku'),
-            content: const Text('Apakah kamu yakin ingin menghapus buku ini?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Hapus'),
-              ),
-            ],
-          ),
+  void logoutSuccess() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
     );
-
-    if (confirm == true) {
-      await ApiService().deleteBook(id);
-      fetchBooks();
-    }
   }
 
   @override
@@ -120,7 +114,7 @@ class _BookListPageState extends State<BookListPage> {
                 MaterialPageRoute(
                   builder:
                       (context) => ProfilePage(
-                        username: 'nizarb',
+                        username: _username,
                         totalBooks: books.length,
                         totalCategories: groupedBooks.length,
                       ),
@@ -133,10 +127,7 @@ class _BookListPageState extends State<BookListPage> {
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.remove('token');
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              );
+              logoutSuccess();
             },
           ),
         ],

@@ -49,6 +49,24 @@ class _BookFormPageState extends State<BookFormPage> {
     }
   }
 
+  void createSuccess() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Buku berhasil ditambahkan')));
+  }
+
+  void updateSuccess() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Buku berhasil diperbarui')));
+  }
+
+  void submitFail(e) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -64,21 +82,15 @@ class _BookFormPageState extends State<BookFormPage> {
     try {
       if (widget.book == null) {
         await ApiService().createBook(payload, _coverImage);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Buku berhasil ditambahkan')),
-        );
+        createSuccess();
       } else {
         await ApiService().updateBook(widget.book!.id, payload, _coverImage);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Buku berhasil diperbarui')),
-        );
+        updateSuccess();
       }
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+      submitFail(e);
     } finally {
       setState(() => _isLoading = false);
     }

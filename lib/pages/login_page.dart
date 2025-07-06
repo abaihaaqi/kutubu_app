@@ -35,9 +35,11 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Login gagal: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Login gagal: $e')));
+      }
     } finally {
       setState(() => _isLoading = false);
     }

@@ -6,11 +6,11 @@ class ProfilePage extends StatelessWidget {
   final int totalCategories;
 
   const ProfilePage({
-    Key? key,
+    super.key,
     required this.username,
     required this.totalBooks,
     required this.totalCategories,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

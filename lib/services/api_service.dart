@@ -26,6 +26,7 @@ class ApiService {
       final body = jsonDecode(res.body);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', body['token']);
+      await prefs.setString('username', username);
     } else {
       throw Exception('Login failed');
     }
