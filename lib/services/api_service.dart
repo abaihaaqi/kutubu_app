@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-const baseUrl = 'http://localhost:5000';
+final baseUrl = dotenv.env['BASE_URL']!;
 
 class ApiService {
   Future<void> register(String username, String password) async {
@@ -40,30 +41,57 @@ class ApiService {
     return jsonDecode(res.body);
   }
 
-  Future<void> createBook(Map<String, dynamic> book) async {
+  Future<void> createBook(Map<String, dynamic> book, [File? coverImage]) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
-    await http.post(
-      Uri.parse('$baseUrl/books'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(book),
-    );
+
+    var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/books'))
+      ..headers['Authorization'] = 'Bearer $token';
+
+    // Tambahkan semua field sebagai string
+    book.forEach((key, value) {
+      request.fields[key] = value.toString();
+    });
+
+    if (coverImage != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('cover_image', coverImage.path),
+      );
+    }
+
+    final response = await request.send();
+    if (response.statusCode != 201) {
+      final resBody = await response.stream.bytesToString();
+      throw Exception('Gagal menambahkan buku: $resBody');
+    }
   }
 
-  Future<void> updateBook(int id, Map<String, dynamic> book) async {
+  Future<void> updateBook(
+    int id,
+    Map<String, dynamic> book, [
+    File? coverImage,
+  ]) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
-    await http.put(
-      Uri.parse('$baseUrl/books/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(book),
-    );
+
+    var request = http.MultipartRequest('PUT', Uri.parse('$baseUrl/books/$id'))
+      ..headers['Authorization'] = 'Bearer $token';
+
+    book.forEach((key, value) {
+      request.fields[key] = value.toString();
+    });
+
+    if (coverImage != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('cover_image', coverImage.path),
+      );
+    }
+
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      final resBody = await response.stream.bytesToString();
+      throw Exception('Gagal memperbarui buku: $resBody');
+    }
   }
 
   Future<void> deleteBook(int id) async {
@@ -73,15 +101,5 @@ class ApiService {
       Uri.parse('$baseUrl/books/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
-  }
-
-  Future<void> uploadCover(int bookId, File file) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-    final request =
-        http.MultipartRequest('POST', Uri.parse('$baseUrl/books/$bookId/cover'))
-          ..headers['Authorization'] = 'Bearer $token'
-          ..files.add(await http.MultipartFile.fromPath('file', file.path));
-    await request.send();
   }
 }

@@ -1,6 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/book_model.dart';
 import '../services/api_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+final baseUrl = dotenv.env['BASE_URL']!;
 
 class BookFormPage extends StatefulWidget {
   final Book? book;
@@ -17,7 +23,9 @@ class _BookFormPageState extends State<BookFormPage> {
   final _authorCtrl = TextEditingController();
   final _yearCtrl = TextEditingController();
   final _categoryCtrl = TextEditingController();
+  String? _existingImageUrl = "";
   bool _isLoading = false;
+  File? _coverImage;
 
   @override
   void initState() {
@@ -27,6 +35,17 @@ class _BookFormPageState extends State<BookFormPage> {
       _authorCtrl.text = widget.book!.author;
       _yearCtrl.text = widget.book!.year.toString();
       _categoryCtrl.text = widget.book!.category;
+      _categoryCtrl.text = widget.book!.category;
+      _existingImageUrl = widget.book!.coverUrl;
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() => _coverImage = File(pickedFile.path));
     }
   }
 
@@ -44,12 +63,12 @@ class _BookFormPageState extends State<BookFormPage> {
 
     try {
       if (widget.book == null) {
-        await ApiService().createBook(payload);
+        await ApiService().createBook(payload, _coverImage);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Buku berhasil ditambahkan')),
         );
       } else {
-        await ApiService().updateBook(widget.book!.id, payload);
+        await ApiService().updateBook(widget.book!.id, payload, _coverImage);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Buku berhasil diperbarui')),
         );
@@ -107,6 +126,25 @@ class _BookFormPageState extends State<BookFormPage> {
                 decoration: const InputDecoration(labelText: 'Kategori'),
                 validator:
                     (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Cover Buku',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              _coverImage != null
+                  ? Image.file(_coverImage!, height: 150)
+                  : (_existingImageUrl != ""
+                      ? Image.network(
+                        "$baseUrl/${_existingImageUrl!}",
+                        height: 150,
+                      )
+                      : const Text('Belum ada gambar yang dipilih')),
+              TextButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.image),
+                label: const Text('Pilih Gambar'),
               ),
               const SizedBox(height: 24),
               ElevatedButton(

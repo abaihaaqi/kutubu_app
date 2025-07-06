@@ -1,11 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:kutubu_app/pages/profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/book_model.dart';
 import '../services/api_service.dart';
 import '../widgets/book_card.dart';
 import 'login_page.dart';
+import 'book_form_page.dart';
+import 'book_detail_page.dart';
 
 class BookListPage extends StatefulWidget {
   const BookListPage({super.key});
@@ -16,7 +17,10 @@ class BookListPage extends StatefulWidget {
 
 class _BookListPageState extends State<BookListPage> {
   List<Book> books = [];
+  List<Book> filteredBooks = [];
   bool isLoading = true;
+  String searchQuery = '';
+  Map<String, List<Book>> groupedBooks = {};
 
   @override
   void initState() {
@@ -30,6 +34,7 @@ class _BookListPageState extends State<BookListPage> {
       final data = await ApiService().getBooks();
       setState(() {
         books = data.map((e) => Book.fromJson(e)).toList();
+        filterBooks(); // Apply search filter
       });
     } catch (e) {
       ScaffoldMessenger.of(
@@ -40,68 +45,38 @@ class _BookListPageState extends State<BookListPage> {
     }
   }
 
-  Future<void> showBookDialog({Book? book}) async {
-    final titleCtrl = TextEditingController(text: book?.title);
-    final authorCtrl = TextEditingController(text: book?.author);
-    final yearCtrl = TextEditingController(text: book?.year.toString());
-    final categoryCtrl = TextEditingController(text: book?.category);
+  void filterBooks() {
+    final filtered =
+        books.where((book) {
+          final query = searchQuery.toLowerCase();
+          return book.title.toLowerCase().contains(query) ||
+              book.author.toLowerCase().contains(query);
+        }).toList();
 
-    await showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text(book == null ? 'Tambah Buku' : 'Edit Buku'),
-            content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  TextField(
-                    controller: titleCtrl,
-                    decoration: const InputDecoration(labelText: 'Judul'),
-                  ),
-                  TextField(
-                    controller: authorCtrl,
-                    decoration: const InputDecoration(labelText: 'Penulis'),
-                  ),
-                  TextField(
-                    controller: yearCtrl,
-                    decoration: const InputDecoration(labelText: 'Tahun'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextField(
-                    controller: categoryCtrl,
-                    decoration: const InputDecoration(labelText: 'Kategori'),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final payload = {
-                    'title': titleCtrl.text.trim(),
-                    'author': authorCtrl.text.trim(),
-                    'year': int.tryParse(yearCtrl.text.trim()) ?? 0,
-                    'category': categoryCtrl.text.trim(),
-                  };
+    // Kelompokkan berdasarkan kategori
+    final Map<String, List<Book>> grouped = {};
+    for (var book in filtered) {
+      final category = book.category != "" ? book.category : 'Lainnya';
+      if (!grouped.containsKey(category)) {
+        grouped[category] = [];
+      }
+      grouped[category]!.add(book);
+    }
 
-                  if (book == null) {
-                    await ApiService().createBook(payload);
-                  } else {
-                    await ApiService().updateBook(book.id, payload);
-                  }
+    setState(() {
+      groupedBooks = grouped;
+    });
+  }
 
-                  Navigator.pop(ctx);
-                  fetchBooks();
-                },
-                child: const Text('Simpan'),
-              ),
-            ],
-          ),
+  Future<void> openBookForm({Book? book}) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => BookFormPage(book: book)),
     );
+
+    if (result == true) {
+      fetchBooks();
+    }
   }
 
   Future<void> confirmDelete(int id) async {
@@ -130,15 +105,6 @@ class _BookListPageState extends State<BookListPage> {
     }
   }
 
-  Future<void> pickAndUploadCover(int bookId) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      await ApiService().uploadCover(bookId, File(picked.path));
-      fetchBooks();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,6 +112,22 @@ class _BookListPageState extends State<BookListPage> {
         title: const Text('Daftar Buku'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: fetchBooks),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => ProfilePage(
+                        username: 'nizarb',
+                        totalBooks: books.length,
+                        totalCategories: groupedBooks.length,
+                      ),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -160,23 +142,77 @@ class _BookListPageState extends State<BookListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showBookDialog(),
+        onPressed: () => openBookForm(),
         child: const Icon(Icons.add),
       ),
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
-              : books.isEmpty
-              ? const Center(child: Text('Tidak ada buku'))
-              : ListView.builder(
-                itemCount: books.length,
-                itemBuilder:
-                    (ctx, i) => BookCard(
-                      book: books[i],
-                      onEdit: () => showBookDialog(book: books[i]),
-                      onDelete: () => confirmDelete(books[i].id),
-                      onUploadCover: () => pickAndUploadCover(books[i].id),
+              : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Cari buku...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        searchQuery = value;
+                        filterBooks();
+                      },
                     ),
+                  ),
+                  Expanded(
+                    child:
+                        groupedBooks.isEmpty
+                            ? const Center(child: Text('Tidak ada buku'))
+                            : ListView(
+                              children:
+                                  groupedBooks.entries.map((entry) {
+                                    final category = entry.key;
+                                    final booksInCategory = entry.value;
+
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                          child: Text(
+                                            category,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        ...booksInCategory.map(
+                                          (book) => BookCard(
+                                            book: book,
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (_) => BookDetailPage(
+                                                        book: book,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
+                            ),
+                  ),
+                ],
               ),
     );
   }

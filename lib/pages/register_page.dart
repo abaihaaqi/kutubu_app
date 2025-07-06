@@ -11,6 +11,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
@@ -68,6 +69,19 @@ class _RegisterPageState extends State<RegisterPage> {
                     (val) =>
                         val != null && val.length < 6
                             ? 'Minimal 6 karakter'
+                            : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _confirmPasswordController,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
+                ),
+                obscureText: true,
+                validator:
+                    (val) =>
+                        val != _passwordController.text
+                            ? 'Password tidak sama'
                             : null,
               ),
               const SizedBox(height: 24),
