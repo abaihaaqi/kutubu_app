@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kutubu_app/main.dart';
+import 'package:kutubu_app/pages/login_page.dart';
 import '../services/api_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -46,7 +48,20 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      appBar: AppBar(
+        leading: Center(
+          child: Image.asset(
+            'assets/kutubu-logo-transparent.png',
+            width: 24,
+            fit: BoxFit.fitWidth,
+          ),
+        ),
+        title: const Text(
+          'Daftar',
+          style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
+        ),
+        backgroundColor: primaryColor,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -93,6 +108,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     _isLoading
                         ? const CircularProgressIndicator()
                         : const Text('Register'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                  );
+                },
+                child: const Text('Sudah punya akun? Masuk'),
               ),
             ],
           ),

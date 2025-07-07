@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kutubu_app/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'book_list_page.dart';
@@ -65,7 +66,20 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(
+        leading: Center(
+          child: Image.asset(
+            'assets/kutubu-logo-transparent.png',
+            width: 24,
+            fit: BoxFit.fitWidth,
+          ),
+        ),
+        title: const Text(
+          'Login',
+          style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
+        ),
+        backgroundColor: primaryColor,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -103,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const RegisterPage()),
                   );

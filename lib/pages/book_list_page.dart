@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kutubu_app/main.dart';
 import 'package:kutubu_app/pages/profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/book_model.dart';
@@ -63,7 +64,9 @@ class _BookListPageState extends State<BookListPage> {
         books.where((book) {
           final query = searchQuery.toLowerCase();
           return book.title.toLowerCase().contains(query) ||
-              book.author.toLowerCase().contains(query);
+              book.author.toLowerCase().contains(query) ||
+              book.category.toLowerCase().contains(query) ||
+              book.year.toString().contains(query);
         }).toList();
 
     // Kelompokkan berdasarkan kategori
@@ -103,11 +106,23 @@ class _BookListPageState extends State<BookListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daftar Buku'),
+        title: const Text(
+          'Daftar Buku',
+          style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: fetchBooks),
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(
+              Icons.refresh,
+              color: Color.fromRGBO(255, 255, 255, 1),
+            ),
+            onPressed: fetchBooks,
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.person,
+              color: Color.fromRGBO(255, 255, 255, 1),
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -123,7 +138,10 @@ class _BookListPageState extends State<BookListPage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(
+              Icons.logout,
+              color: Color.fromRGBO(255, 255, 255, 1),
+            ),
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.remove('token');
@@ -131,6 +149,7 @@ class _BookListPageState extends State<BookListPage> {
             },
           ),
         ],
+        backgroundColor: primaryColor,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => openBookForm(),
@@ -145,7 +164,7 @@ class _BookListPageState extends State<BookListPage> {
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
                       decoration: const InputDecoration(
-                        labelText: 'Cari buku...',
+                        labelText: 'Cari buku',
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
                       ),

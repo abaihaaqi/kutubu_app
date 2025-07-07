@@ -77,8 +77,8 @@ class BookDetailPage extends StatelessWidget {
                   },
                 ),
                 ElevatedButton.icon(
-                  icon: Icon(Icons.delete),
-                  label: Text('Hapus'),
+                  icon: Icon(Icons.delete, color: Colors.white),
+                  label: Text('Hapus', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   onPressed: () {
                     showDialog(
