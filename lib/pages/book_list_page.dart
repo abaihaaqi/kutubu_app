@@ -84,10 +84,21 @@ class _BookListPageState extends State<BookListPage> {
     });
   }
 
-  Future<void> openBookForm({Book? book}) async {
+  Future<void> openBookForm() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => BookFormPage(book: book)),
+      MaterialPageRoute(builder: (_) => BookFormPage()),
+    );
+
+    if (result == true) {
+      fetchBooks();
+    }
+  }
+
+  Future<void> openBookDetail({required Book book}) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => BookDetailPage(book: book)),
     );
 
     if (result == true) {
@@ -163,10 +174,12 @@ class _BookListPageState extends State<BookListPage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Cari buku',
                         prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
                       ),
                       onChanged: (value) {
                         searchQuery = value;
@@ -204,17 +217,9 @@ class _BookListPageState extends State<BookListPage> {
                                         ...booksInCategory.map(
                                           (book) => BookCard(
                                             book: book,
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder:
-                                                      (_) => BookDetailPage(
-                                                        book: book,
-                                                      ),
-                                                ),
-                                              );
-                                            },
+                                            onTap:
+                                                () =>
+                                                    openBookDetail(book: book),
                                           ),
                                         ),
                                       ],

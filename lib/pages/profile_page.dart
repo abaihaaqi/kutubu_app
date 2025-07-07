@@ -21,19 +21,25 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '👤 Username: $username',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Center(child: Icon(Icons.person, size: 200)),
+            Center(
+              child: Text(
+                username,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Text(
-              '📚 Total Buku: $totalBooks',
+              'Total Buku: $totalBooks',
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
             Text(
-              '🏷️ Kategori Tersimpan: $totalCategories',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'Kategori Tersimpan: $totalCategories',
+              style: TextStyle(fontSize: 16),
             ),
           ],
         ),

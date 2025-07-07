@@ -27,6 +27,8 @@ class BookCard extends StatelessWidget {
               hasCover
                   ? Image.network(
                     "$baseUrl/${book.coverUrl!}",
+                    width: 60,
+                    fit: BoxFit.fitWidth,
                     errorBuilder:
                         (_, __, ___) =>
                             const Icon(Icons.broken_image, size: 60),

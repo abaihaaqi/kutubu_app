@@ -32,7 +32,10 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Register berhasil! Silakan login.')),
         );
-        Navigator.pop(context); // kembali ke halaman login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
       }
     } catch (e) {
       if (mounted) {

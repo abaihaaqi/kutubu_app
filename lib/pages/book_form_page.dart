@@ -83,12 +83,23 @@ class _BookFormPageState extends State<BookFormPage> {
       if (widget.book == null) {
         await ApiService().createBook(payload, _coverImage);
         createSuccess();
+        if (mounted) {
+          Navigator.pop(context, true); // untuk BookListPage (tidak perlu Book)
+        }
       } else {
-        await ApiService().updateBook(widget.book!.id, payload, _coverImage);
+        final updatedBook = await ApiService().updateBook(
+          widget.book!.id,
+          payload,
+          _coverImage,
+        );
         updateSuccess();
+        if (mounted) {
+          Navigator.pop(
+            context,
+            updatedBook,
+          ); // kirim Book kembali ke detail page
+        }
       }
-
-      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       submitFail(e);
     } finally {

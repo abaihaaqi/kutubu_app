@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:kutubu_app/models/book_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -67,7 +68,7 @@ class ApiService {
     }
   }
 
-  Future<void> updateBook(
+  Future<Book> updateBook(
     int id,
     Map<String, dynamic> book, [
     File? coverImage,
@@ -89,10 +90,15 @@ class ApiService {
     }
 
     final response = await request.send();
+
+    final resBody = await response.stream.bytesToString();
     if (response.statusCode != 200) {
-      final resBody = await response.stream.bytesToString();
       throw Exception('Gagal memperbarui buku: $resBody');
     }
+
+    // ✨ Ubah respons JSON menjadi objek Book
+    final data = jsonDecode(resBody);
+    return Book.fromJson(data);
   }
 
   Future<void> deleteBook(int id) async {
